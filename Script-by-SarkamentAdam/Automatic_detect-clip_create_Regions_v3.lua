@@ -6,12 +6,10 @@ A script a következő lépéseket hajtja végre:
 4. Létrehoz egy régiót az elem pozíciójának és hosszának megfelelően.
 5. Frissíti a rendezési nézetet, hogy megjelenítse az új régiókat.
 ------ Frissítés | Automatic_detect-clip_create_Regions_v3 | 2025.10.12.
-
 • automatikusan régiókra osztja a kiválasztott médiaelemeket.
 + • Frissítés v2 : Lehetőség lett az időráhagyásra előtte és utána.
 + • Frissítés v3 : Lekéri az eredeti az eredeti média elemhez tartozó nevet
 és az alapján nevezi el a régiót. (eltérő színezéssel)
-
 Régiók létrehozása a kiválasztott itemekből, ráhagyással, automatikus elnevezéssel,
 színezéssel, és a legutóbb használt beállítások megjegyzésével.
 --]]
