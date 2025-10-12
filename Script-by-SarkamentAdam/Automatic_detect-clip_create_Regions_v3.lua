@@ -5,17 +5,15 @@ A script a következő lépéseket hajtja végre:
 3. Lekéri az elem pozícióját és hosszát.
 4. Létrehoz egy régiót az elem pozíciójának és hosszának megfelelően.
 5. Frissíti a rendezési nézetet, hogy megjelenítse az új régiókat.
------- Frissítés | Automatic_detect-clip_create_Regions_v2 | 2025.10.12.
-Ez a script automatikusan létrehoz régiókat a kiválasztott médiaelemek helyén és hosszán alapulva,
-de lehetőséget ad arra is, hogy milliszekundumban megadjuk,
-mennyi időt hagyjon rájuk előtte és utána.
-
-Korábbi szkript lépései: (ez is hasonló metodikát hajt végre, de lehetőség van immár időráhagyásra)
-Ez a script automatikusan létrehoz régiókat a kiválasztott média elemek helyén és hosszán alapulva.
-Minden kiválasztott média elemhez létrehoz egy régiót, amely megfelel az elem kezdőpozíciójának és hosszának.
 ------ Frissítés | Automatic_detect-clip_create_Regions_v3 | 2025.10.12.
-• Régiók létrehozása a kiválasztott itemekből,
-• ráhagyással, automatikus elnevezéssel, színezéssel, és a legutóbb használt beállítások megjegyzésével.
+
+• automatikusan régiókra osztja a kiválasztott médiaelemeket.
++ • Frissítés v2 : Lehetőség lett az időráhagyásra előtte és utána.
++ • Frissítés v3 : Lekéri az eredeti az eredeti média elemhez tartozó nevet
+és az alapján nevezi el a régiót. (eltérő színezéssel)
+
+Régiók létrehozása a kiválasztott itemekből, ráhagyással, automatikus elnevezéssel,
+színezéssel, és a legutóbb használt beállítások megjegyzésével.
 --]]
 
 -- Konfig fájl elérési útja (a REAPER resource path-ban)
