@@ -306,9 +306,12 @@ local function loop()
     reaper.ImGui_TextWrapped(ctx, "Creates regions from selected media items and updates tracked regions.")
     reaper.ImGui_Separator(ctx)
 
-    reaper.ImGui_Text(ctx, "Regionhatárok")
-    settings.before_ms = input_int("Leading padding (ms)", settings.before_ms)
-    settings.after_ms = input_int("Trailing padding (ms)", settings.after_ms)
+    reaper.ImGui_Text(ctx, "Regional boundaries")
+    --settings.before_ms = input_int("Leading padding (ms)", settings.before_ms)
+    --settings.after_ms = input_int("Trailing padding (ms)", settings.after_ms)
+    --padding item after
+    settings.before_ms = input_int("padding item before (ms)", settings.before_ms)
+    settings.after_ms = input_int("padding item after (ms)", settings.after_ms)
     settings.gap_ms = input_int("Minimum gap (ms)", settings.gap_ms)
     reaper.ImGui_TextDisabled(ctx, "This minimum gap is preserved when regions collide.")
 
