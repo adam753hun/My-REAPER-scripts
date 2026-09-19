@@ -141,7 +141,7 @@ end
 local function save_settings(s)
   reaper.SetExtState(SETTINGS_SECTION, SETTINGS_KEY, table.concat({
     s.before_ms, s.after_ms, s.gap_ms, s.name_source, s.prefix, s.suffix,
-    s.color_mode, s.red, s.green, s.blue
+    s.color_mode, s.red, s.green, s.blue, s.ui_scale
   }, "|"), true)
 end
 
@@ -151,7 +151,8 @@ local function load_settings()
     before_ms = tonumber(v[1]) or 0, after_ms = tonumber(v[2]) or 0, gap_ms = tonumber(v[3]) or 1,
     name_source = tonumber(v[4]) or 0, prefix = v[5] or "", suffix = v[6] or "",
     color_mode = tonumber(v[7]) or 0, red = tonumber(v[8]) or 0.27,
-    green = tonumber(v[9]) or 0.51, blue = tonumber(v[10]) or 0.71
+    green = tonumber(v[9]) or 0.51, blue = tonumber(v[10]) or 0.71,
+    ui_scale = tonumber(v[11]) or 1.0
   }
 end
 
@@ -216,7 +217,78 @@ local function process_regions(settings, refresh_only)
 end
 
 local ctx = reaper.ImGui_CreateContext("Régiókészítő v5")
+
+-- Purple accent theme / Lila kiemelőtéma.
+-- Change the hexadecimal RGBA values below to customize the interface colors.
+-- Az alábbi hexadecimális RGBA értékek módosításával változtathatod a felület színeit.
+local PURPLE_THEME = {
+  -- Window title bar / Ablakfejléc: purple.
+  { reaper.ImGui_Col_TitleBg(),          0x2F1B47FF },
+  { reaper.ImGui_Col_TitleBgActive(),    0x5C3A82FF },
+  { reaper.ImGui_Col_TitleBgCollapsed(), 0x241536FF },
+
+  -- Buttons / Gombok: purple.
+  { reaper.ImGui_Col_Button(),        0x6A3D9AFF },
+  { reaper.ImGui_Col_ButtonHovered(), 0x824DBDFF },
+  { reaper.ImGui_Col_ButtonActive(),  0x512674FF },
+
+  -- Selectors and input fields / Választó- és beviteli mezők: dark pink for readable white text.
+  -- A sötét pink árnyalat megtartja a fehér felirat jó olvashatóságát.
+  { reaper.ImGui_Col_FrameBg(),        0x76214CFF },
+  { reaper.ImGui_Col_FrameBgHovered(), 0x942B61FF },
+  { reaper.ImGui_Col_FrameBgActive(),  0xB33A75FF },
+  { reaper.ImGui_Col_Header(),         0x8B2859FF },
+  { reaper.ImGui_Col_HeaderHovered(),  0xAA3770FF },
+  { reaper.ImGui_Col_HeaderActive(),   0x6D1C45FF },
+
+  { reaper.ImGui_Col_CheckMark(),        0xD9B5FFFF },
+  { reaper.ImGui_Col_SliderGrab(),       0xB85CD1FF },
+  { reaper.ImGui_Col_SliderGrabActive(), 0xDB91F0FF }
+}
+
+local function push_purple_theme()
+  for _, color in ipairs(PURPLE_THEME) do
+    reaper.ImGui_PushStyleColor(ctx, color[1], color[2])
+  end
+end
+
+-- Real font-based GUI scaling / Valódi, betűkészlet-alapú GUI-méretezés.
+-- These are the font sizes used by the footer – and + buttons. Change FONT_BASE_SIZE to alter all sizes.
+-- Ezeket a betűméreteket a lábléc – és + gombjai használják. A FONT_BASE_SIZE értéke minden méretet módosít.
+local FONT_BASE_SIZE = 14
+local GUI_FONTS = {}
+if reaper.ImGui_CreateFont and reaper.ImGui_Attach and reaper.ImGui_PushFont then
+  for step = 8, 16 do
+    local scale = step / 10
+    -- ReaImGui requires an integer point size / A ReaImGui egész számú betűméretet igényel.
+    local font_size = math.floor(FONT_BASE_SIZE * scale + 0.5)
+    local font = reaper.ImGui_CreateFont("sans-serif", font_size)
+    reaper.ImGui_Attach(ctx, font)
+    -- This ReaImGui version also needs the size when the font is activated.
+    -- Ebben a ReaImGui-verzióban aktiváláskor a méretet is át kell adni.
+    GUI_FONTS[scale] = { handle = font, size = font_size }
+  end
+end
+
+local function get_gui_font(scale)
+  return GUI_FONTS[math.floor(scale * 10 + 0.5) / 10]
+end
+
+-- Default window size / Alapértelmezett ablakméret.
+-- The window opens large enough for the full form, while remaining manually resizable.
+-- Az ablak alapból a teljes űrlaphoz elegendő méretben nyílik meg, de kézzel továbbra is átméretezhető.
 local settings = load_settings()
+
+local function set_scaled_window_size()
+
+-- local width = math.min(900, 620 * settings.ui_scale)     //Korábbi
+-- local height = math.min(760, 700 * settings.ui_scale)    //Korábbi
+  local width = math.min(900, 620 * settings.ui_scale)
+  local height = math.min(760, 700 * settings.ui_scale)
+  if reaper.ImGui_SetWindowSize then
+    reaper.ImGui_SetWindowSize(ctx, width, height, reaper.ImGui_Cond_Always())
+  end
+end
 local status = "Állítsd be a régiókat, majd válassz műveletet."
 
 local function input_int(label, value)
@@ -225,9 +297,13 @@ local function input_int(label, value)
 end
 
 local function loop()
-  reaper.ImGui_SetNextWindowSize(ctx, 520, 560, reaper.ImGui_Cond_FirstUseEver())
+  -- First opening: large enough to show all controls without scrolling / Első megnyitás: görgetés nélküli méret.
+  reaper.ImGui_SetNextWindowSize(ctx, math.min(900, 620 * settings.ui_scale), math.min(760, 700 * settings.ui_scale), reaper.ImGui_Cond_FirstUseEver())
   local visible, open = reaper.ImGui_Begin(ctx, "Régiókészítő v5", true)
   if visible then
+    push_purple_theme()
+    local active_font = get_gui_font(settings.ui_scale)
+    if active_font then reaper.ImGui_PushFont(ctx, active_font.handle, active_font.size) end
     reaper.ImGui_TextWrapped(ctx, "Kijelölt médiaitemekből régiókat hoz létre, illetve követett régiókat frissít.")
     reaper.ImGui_Separator(ctx)
 
@@ -291,7 +367,32 @@ local function loop()
     reaper.ImGui_TextWrapped(ctx, status)
     reaper.ImGui_Separator(ctx)
     -- Subtle footer / Visszafogott lábléc.
-    reaper.ImGui_TextDisabled(ctx, "Régiókészítő v0.5a | By Sarkament Ádám © 2026")
+    reaper.ImGui_TextDisabled(ctx, "Régiókészítő / Region Creator v0.5a | By Sarkament Ádám © 2026")
+    reaper.ImGui_TextDisabled(ctx, "AI közreműködésével készült / Developed with AI assistance")
+    reaper.ImGui_TextDisabled(ctx, "Betűméret / GUI scale:")
+    reaper.ImGui_SameLine(ctx)
+    -- GUI scale controls / GUI-méretező vezérlők.
+    if reaper.ImGui_Button(ctx, "–") then
+      settings.ui_scale = math.max(0.8, settings.ui_scale - 0.1)
+      save_settings(settings)
+      set_scaled_window_size()
+    end
+    reaper.ImGui_SameLine(ctx)
+    reaper.ImGui_TextDisabled(ctx, string.format("%d%%", math.floor(settings.ui_scale * 100 + 0.5)))
+    reaper.ImGui_SameLine(ctx)
+    if reaper.ImGui_Button(ctx, "+") then
+      settings.ui_scale = math.min(1.6, settings.ui_scale + 0.1)
+      save_settings(settings)
+      set_scaled_window_size()
+    end
+    reaper.ImGui_SameLine(ctx)
+    if reaper.ImGui_Button(ctx, "100%") then
+      settings.ui_scale = 1.0
+      save_settings(settings)
+      set_scaled_window_size()
+    end
+    if active_font then reaper.ImGui_PopFont(ctx) end
+    reaper.ImGui_PopStyleColor(ctx, #PURPLE_THEME)
     reaper.ImGui_End(ctx)
   end
   if open then
